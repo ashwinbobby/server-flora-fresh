@@ -7,7 +7,7 @@ import io
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/*": {"origins": ["https://client-flora-fresh.vercel.app"]}})
 
 # ================================
 # CONFIG
