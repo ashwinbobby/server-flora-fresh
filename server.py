@@ -7,7 +7,7 @@ import io
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["https://client-flora-fresh.vercel.app"]}})
+CORS(app, resources={r"/*": {"origins": ["*"]}})
 
 # ================================
 # CONFIG
@@ -41,10 +41,9 @@ transform = transforms.Compose([
 # ================================
 # ROUTE
 # ================================
-@app.route("/health", 
-           methods=["GET"])
+@app.route("/health", methods=["GET"])
 def checkHealth():
-    return jsonify({"sstatus": "running"})
+    return jsonify({"status": "running"})
 
 @app.route("/predict", methods=["POST"])
 def predict():
