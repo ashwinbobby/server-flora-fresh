@@ -18,15 +18,15 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # ================================
 # CLASS LABELS
 # ================================
-CLASS_NAMES = ['Pepper__bell___Bacterial_spot', 'Pepper__bell___healthy', 'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 'Tomato_Bacterial_spot', 'Tomato_Early_blight', 'Tomato_Late_blight', 'Tomato_Leaf_Mold', 'Tomato_Septoria_leaf_spot', 'Tomato_Spider_mites_Two_spotted_spider_mite', 'Tomato__Target_Spot', 'Tomato__Tomato_YellowLeaf__Curl_Virus', 'Tomato__Tomato_mosaic_virus', 'Tomato_healthy']
-# ================================
-# LOAD MODEL
-# ================================
-student = models.resnet18(weights=None)
-student.fc = nn.Linear(student.fc.in_features, NUM_CLASSES)
-student.load_state_dict(torch.load("student_best.pth", map_location=DEVICE))
-student = student.to(DEVICE)
-student.eval()
+CLASS_NAMES = [
+    'Pepper__bell___Bacterial_spot', 'Pepper__bell___healthy',
+    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
+    'Tomato_Bacterial_spot', 'Tomato_Early_blight', 'Tomato_Late_blight',
+    'Tomato_Leaf_Mold', 'Tomato_Septoria_leaf_spot',
+    'Tomato_Spider_mites_Two_spotted_spider_mite', 'Tomato__Target_Spot',
+    'Tomato__Tomato_YellowLeaf__Curl_Virus', 'Tomato__Tomato_mosaic_virus',
+    'Tomato_healthy'
+]
 
 # ================================
 # TRANSFORM
@@ -39,7 +39,25 @@ transform = transforms.Compose([
 ])
 
 # ================================
-# ROUTE
+# MODEL LOADER (lazy load)
+# ================================
+student = None
+
+def get_model():
+    global student
+    if student is None:
+        print("🔄 Loading model into memory...")
+        model = models.resnet18(weights=None)
+        model.fc = nn.Linear(model.fc.in_features, NUM_CLASSES)
+        model.load_state_dict(torch.load("student_best.pth", map_location=DEVICE))
+        model = model.to(DEVICE)
+        model.eval()
+        student = model
+        print("✅ Model loaded successfully")
+    return student
+
+# ================================
+# ROUTES
 # ================================
 @app.route("/health", methods=["GET"])
 def checkHealth():
@@ -54,8 +72,10 @@ def predict():
     img = Image.open(io.BytesIO(file.read())).convert("RGB")
     img = transform(img).unsqueeze(0).to(DEVICE)
 
+    model = get_model()
+
     with torch.no_grad():
-        outputs = student(img)
+        outputs = model(img)
         _, predicted = torch.max(outputs, 1)
         class_id = predicted.item()
         class_name = CLASS_NAMES[class_id]
