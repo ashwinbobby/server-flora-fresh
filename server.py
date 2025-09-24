@@ -41,6 +41,10 @@ transform = transforms.Compose([
 # ================================
 # ROUTE
 # ================================
+@app.route("/health", 
+           methods=["GET"])
+def checkHealth():
+    return jsonify({"sstatus": "running"})
 
 @app.route("/predict", methods=["POST"])
 def predict():
